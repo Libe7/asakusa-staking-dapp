@@ -26,86 +26,86 @@
             text-align: center; 
             box-shadow: 0 10px 30px rgba(255, 69, 0, 0.15);
         }
+        #langSelect { background: #222; color: #fff; border: 1px solid #444; padding: 5px; border-radius: 5px; margin-bottom: 20px; }
         h2 { margin-bottom: 25px; letter-spacing: 1px; color: #ff4500; }
-        input { 
-            width: 100%; 
-            padding: 15px; 
-            margin-bottom: 20px; 
-            background: #000; 
-            border: 1px solid #333; 
-            color: #fff; 
-            border-radius: 8px; 
-            box-sizing: border-box; 
-            font-size: 16px;
-        }
-        button { 
-            background: #ff4500; 
-            color: #fff; 
-            border: none; 
-            padding: 15px; 
-            width: 100%; 
-            cursor: pointer; 
-            font-weight: 700; 
-            margin-top: 10px; 
-            border-radius: 8px; 
-            transition: all 0.3s;
-        }
+        input { width: 100%; padding: 15px; margin-bottom: 20px; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; box-sizing: border-box; }
+        button { background: #ff4500; color: #fff; border: none; padding: 15px; width: 100%; cursor: pointer; font-weight: 700; margin-top: 10px; border-radius: 8px; transition: 0.3s; }
         button:hover { background: #ff6a33; transform: translateY(-2px); }
     </style>
 </head>
 <body>
 
 <div class="panel">
-    <h2>ASAKUSA STAKE</h2>
-    <input type="number" id="amount" placeholder="Введите количество USDT">
-    <button onclick="connectWallet()">Подключить кошелек</button>
-    <button onclick="approveTokens()">Разрешить USDT (Approve)</button>
-    <button onclick="deposit()">Застейкать токены</button>
+    <select id="langSelect" onchange="updateUI()">
+        <option value="en">English</option>
+        <option value="ru">Русский</option>
+        <option value="ja">日本語</option>
+        <option value="es">Español</option>
+        <option value="fr">Français</option>
+        <option value="de">Deutsch</option>
+        <option value="it">Italiano</option>
+        <option value="pt">Português</option>
+        <option value="zh">中文</option>
+        <option value="tr">Türkçe</option>
+    </select>
+    <h2 id="title">ASAKUSA STAKE</h2>
+    <input type="number" id="amount" placeholder="Amount">
+    <button id="btn1" onclick="connectWallet()">Connect Wallet</button>
+    <button id="btn2" onclick="approveTokens()">Approve USDT</button>
+    <button id="btn3" onclick="deposit()">Stake Tokens</button>
 </div>
 
 <script>
     const contractAddress = "0xADEd6D7d0571f5407d57D064f2e964C39B7aa5a7f";
     const tokenAddress = "0x55d398326f96614131557973715c6020c2b29555";
 
+    const langs = {
+        en: { title: "ASAKUSA STAKE", b1: "Connect Wallet", b2: "Approve USDT", b3: "Stake Tokens" },
+        ru: { title: "ASAKUSA СТЕЙКИНГ", b1: "Подключить кошелек", b2: "Разрешить USDT", b3: "Застейкать" },
+        ja: { title: "ASAKUSA ステーキング", b1: "ウォレット接続", b2: "USDTを承認", b3: "ステーキング" },
+        es: { title: "ASAKUSA STAKE", b1: "Conectar billetera", b2: "Aprobar USDT", b3: "Depositar" },
+        fr: { title: "ASAKUSA STAKE", b1: "Connecter le portefeuille", b2: "Approuver USDT", b3: "Staker" },
+        de: { title: "ASAKUSA STAKE", b1: "Wallet verbinden", b2: "USDT genehmigen", b3: "Staken" },
+        it: { title: "ASAKUSA STAKE", b1: "Collega wallet", b2: "Approva USDT", b3: "Metti in stake" },
+        pt: { title: "ASAKUSA STAKE", b1: "Conectar carteira", b2: "Aprovar USDT", b3: "Fazer stake" },
+        zh: { title: "ASAKUSA 质押", b1: "连接钱包", b2: "批准 USDT", b3: "质押代币" },
+        tr: { title: "ASAKUSA STAKE", b1: "Cüzdanı Bağla", b2: "USDT Onayla", b3: "Stake Yap" }
+    };
+
+    function updateUI() {
+        const lang = document.getElementById('langSelect').value;
+        document.getElementById('title').innerText = langs[lang].title;
+        document.getElementById('btn1').innerText = langs[lang].b1;
+        document.getElementById('btn2').innerText = langs[lang].b2;
+        document.getElementById('btn3').innerText = langs[lang].b3;
+    }
+
+    // Твой контрактный код
     const abi = [
         {"inputs":[{"internalType":"uint256","name":"_amount","type":"uint256"},{"internalType":"address","name":"_referrer","type":"address"}],"name":"deposit","outputs":[],"stateMutability":"nonpayable","type":"function"},
-        {"inputs":[{"internalType":"uint256","name":"_index","type":"uint256"}],"name":"withdraw","outputs":[],"stateMutability":"nonpayable","type":"function"},
-        {"inputs":[{"internalType":"address","name":"_user","type":"address"}],"name":"getDepositsCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-        {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"referrers","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
         {"inputs":[],"name":"stakingToken","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"}
     ];
-
-    const erc20Abi = [
-        {"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function"}
-    ];
+    const erc20Abi = [{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function"}];
 
     let provider, signer, contract;
-
     async function connectWallet() {
-        if(!window.ethereum) return alert("Установите MetaMask!");
+        if(!window.ethereum) return alert("Install MetaMask!");
         provider = new ethers.providers.Web3Provider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
         signer = provider.getSigner();
         contract = new ethers.Contract(contractAddress, abi, signer);
-        alert("Кошелек подключен!");
+        alert("Wallet connected!");
     }
-
     async function approveTokens() {
-        if(!signer) return alert("Сначала подключите кошелек!");
         const amount = ethers.utils.parseEther(document.getElementById('amount').value);
         const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, signer);
-        const tx = await tokenContract.approve(contractAddress, amount);
-        await tx.wait();
-        alert("Успешно: USDT одобрен!");
+        await (await tokenContract.approve(contractAddress, amount)).wait();
+        alert("Approved!");
     }
-
     async function deposit() {
-        if(!signer) return alert("Сначала подключите кошелек!");
         const amount = ethers.utils.parseEther(document.getElementById('amount').value);
-        const ref = "0x0000000000000000000000000000000000000000";
-        const tx = await contract.deposit(amount, ref);
-        await tx.wait();
-        alert("Успешно: Депозит принят!");
+        await (await contract.deposit(amount, "0x0000000000000000000000000000000000000000")).wait();
+        alert("Staked!");
     }
 </script>
 </body>
