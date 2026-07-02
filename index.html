@@ -2,79 +2,69 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asakusa Finance</title>
+    <title>Asakusa Staking</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
-        body { background: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; color: #000; }
-        .card { width: 100%; max-width: 400px; padding: 40px; border: 1px solid #eaeaea; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; }
-        h1 { font-size: 24px; margin-bottom: 30px; letter-spacing: -0.5px; }
-        input { width: 100%; padding: 14px; margin-bottom: 20px; border: 1px solid #eaeaea; border-radius: 12px; font-size: 16px; box-sizing: border-box; outline: none; }
-        input:focus { border: 1px solid #000; }
-        button { width: 100%; padding: 14px; margin-bottom: 12px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: background 0.2s; font-size: 15px; }
-        .btn-black { background: #000; color: #fff; }
-        .btn-black:hover { background: #333; }
-        .btn-gray { background: #f4f4f4; color: #000; }
-        .btn-gray:hover { background: #e0e0e0; }
-        #status { margin-top: 20px; font-size: 14px; color: #666; }
+        body { background: #000; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { border: 1px solid #ff4500; padding: 30px; border-radius: 15px; width: 320px; text-align: center; }
+        input { width: 100%; padding: 10px; margin-bottom: 10px; box-sizing: border-box; background: #222; border: 1px solid #444; color: #fff; border-radius: 5px; }
+        button { width: 100%; padding: 10px; margin-bottom: 10px; background: #ff4500; border: none; cursor: pointer; color: #fff; font-weight: bold; border-radius: 5px; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h1>Asakusa Finance</h1>
+    <h3>ASAKUSA STAKE</h3>
     <input type="number" id="amount" placeholder="Количество USDT">
-    <button class="btn-black" onclick="connectWallet()" id="btnConnect">Подключить кошелек</button>
-    <button class="btn-gray" onclick="approveTokens()">Одобрить USDT</button>
-    <button class="btn-gray" onclick="deposit()">Стейкинг</button>
-    <div id="status">Кошелек отключен</div>
+    <button onclick="connectWallet()">Подключить кошелек</button>
+    <button onclick="approveTokens()">Одобрить USDT</button>
+    <button onclick="deposit()">Стейкинг</button>
 </div>
 
 <script>
-    // Жестко задаем адреса. Метод getAddress сам исправит контрольную сумму.
-    const CONTRACT_ADDR = "0xADEd6D7d0571f5407d57D064f2e964C39B7aa5a7f";
-    const USDT_ADDR = "0x55d398326f96614131557973715c6020c2b29555";
-    
-    let signer;
-
     async function connectWallet() {
-        if (!window.ethereum) return alert("Установите MetaMask!");
-        try {
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
-            await provider.send("eth_requestAccounts", []);
-            signer = provider.getSigner();
-            document.getElementById('btnConnect').innerText = "Кошелек подключен";
-            document.getElementById('status').innerText = "Готово к работе";
-        } catch (e) { alert("Ошибка: " + e.message); }
+        if (!window.ethereum) return alert("Установите MetaMask");
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        alert("Кошелек подключен!");
     }
 
     async function approveTokens() {
-        if(!signer) return alert("Подключите кошелек!");
         try {
-            const val = document.getElementById('amount').value || "0";
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const signer = provider.getSigner();
+            const val = document.getElementById("amount").value || "0";
             const amount = ethers.utils.parseEther(val);
-            // Используем getAddress для исправления checksum
-            const tokenContract = new ethers.Contract(ethers.utils.getAddress(USDT_ADDR), 
-                ["function approve(address spender, uint256 amount) external returns (bool)"], signer);
             
-            const tx = await tokenContract.approve(ethers.utils.getAddress(CONTRACT_ADDR), amount);
+            // Адрес вшит прямо здесь, исключая любые ошибки переменных
+            const tokenContract = new ethers.Contract(
+                "0x55d398326f96614131557973715c6020c2b29555", 
+                ["function approve(address spender, uint256 amount) external returns (bool)"], 
+                signer
+            );
+            
+            const tx = await tokenContract.approve("0xADEd6D7d0571f5407d57D064f2e964C39B7aa5a7f", amount);
             await tx.wait();
-            alert("Успешно одобрено!");
-        } catch(e) { alert("Ошибка: " + e.message); }
+            alert("Одобрено!");
+        } catch (e) { alert("Ошибка: " + e.message); }
     }
 
     async function deposit() {
-        if(!signer) return alert("Подключите кошелек!");
         try {
-            const val = document.getElementById('amount').value || "0";
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const signer = provider.getSigner();
+            const val = document.getElementById("amount").value || "0";
             const amount = ethers.utils.parseEther(val);
-            const contract = new ethers.Contract(ethers.utils.getAddress(CONTRACT_ADDR), 
-                ["function deposit(uint256 _amount, address _referrer) external"], signer);
+            
+            const contract = new ethers.Contract(
+                "0xADEd6D7d0571f5407d57D064f2e964C39B7aa5a7f", 
+                ["function deposit(uint256 _amount, address _referrer) external"], 
+                signer
+            );
             
             const tx = await contract.deposit(amount, "0x0000000000000000000000000000000000000000");
             await tx.wait();
-            alert("Успешно застейкано!");
-        } catch(e) { alert("Ошибка: " + e.message); }
+            alert("Стейкинг успешен!");
+        } catch (e) { alert("Ошибка: " + e.message); }
     }
 </script>
 </body>
