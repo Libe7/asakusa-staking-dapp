@@ -5,7 +5,6 @@
     <title>Asakusa Finance | Yield Platform</title>
     <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"></script>
     <style>
-        /* Современный стиль */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
         
         body { 
@@ -58,14 +57,13 @@
 
 <div class="panel">
     <h2>ASAKUSA STAKE</h2>
-    <input type="number" id="amount" placeholder="Количество USDT">
-    <button onclick="connectWallet()">1. Connect Wallet</button>
-    <button onclick="approveTokens()">2. Approve USDT</button>
-    <button onclick="deposit()">3. Stake Tokens</button>
+    <input type="number" id="amount" placeholder="Введите количество USDT">
+    <button onclick="connectWallet()">Подключить кошелек</button>
+    <button onclick="approveTokens()">Разрешить USDT (Approve)</button>
+    <button onclick="deposit()">Застейкать токены</button>
 </div>
 
 <script>
-    // --- ТВОИ НАСТРОЙКИ ---
     const contractAddress = "0xADEd6D7d0571f5407d57D064f2e964C39B7aa5a7f";
     const tokenAddress = "0x55d398326f96614131557973715c6020c2b29555";
 
