@@ -1,55 +1,31 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Asakusa Finance | Yield Platform</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asakusa Finance</title>
     <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
-        
-        body { 
-            background: radial-gradient(circle, #1a0505 0%, #050505 100%); 
-            color: #fff; 
-            font-family: 'Inter', sans-serif; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            margin: 0; 
-        }
-        .panel { 
-            background: rgba(15, 15, 15, 0.95); 
-            padding: 40px; 
-            border: 1px solid #ff4500; 
-            border-radius: 20px; 
-            width: 350px; 
-            text-align: center; 
-            box-shadow: 0 10px 30px rgba(255, 69, 0, 0.15);
-        }
-        #langSelect { background: #222; color: #fff; border: 1px solid #444; padding: 5px; border-radius: 5px; margin-bottom: 20px; width: 100%; }
-        h2 { margin-bottom: 25px; letter-spacing: 1px; color: #ff4500; }
-        input { width: 100%; padding: 15px; margin-bottom: 20px; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; box-sizing: border-box; }
-        button { background: #ff4500; color: #fff; border: none; padding: 15px; width: 100%; cursor: pointer; font-weight: 700; margin-top: 10px; border-radius: 8px; transition: 0.3s; }
-        button:hover { background: #ff6a33; }
+        :root { --main: #ff4500; --bg: #050505; }
+        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .panel { background: #111; padding: 30px; border: 1px solid #333; border-radius: 15px; width: 320px; text-align: center; }
+        select, input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #444; background: #000; color: #fff; }
+        button { background: var(--main); border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { opacity: 0.8; }
     </style>
 </head>
 <body>
 
 <div class="panel">
     <select id="langSelect" onchange="updateUI()">
-        <option value="en">English</option>
-        <option value="ru">Русский</option>
-        <option value="ja">日本語</option>
-        <option value="es">Español</option>
-        <option value="fr">Français</option>
-        <option value="de">Deutsch</option>
-        <option value="it">Italiano</option>
-        <option value="pt">Português</option>
-        <option value="zh">中文</option>
-        <option value="tr">Türkçe</option>
+        <option value="en">English</option><option value="ru">Русский</option>
+        <option value="ja">日本語</option><option value="es">Español</option>
+        <option value="fr">Français</option><option value="de">Deutsch</option>
+        <option value="it">Italiano</option><option value="pt">Português</option>
+        <option value="zh">中文</option><option value="tr">Türkçe</option>
     </select>
     <h2 id="title">ASAKUSA STAKE</h2>
-    <input type="number" id="amount" placeholder="Amount">
+    <input type="number" id="amount" placeholder="Amount (USDT)">
     <button id="btn1" onclick="connectWallet()">Connect Wallet</button>
     <button id="btn2" onclick="approveTokens()">Approve USDT</button>
     <button id="btn3" onclick="deposit()">Stake Tokens</button>
@@ -58,54 +34,66 @@
 <script>
     const contractAddress = "0xADEd6D7d0571f5407d57D064f2e964C39B7aa5a7f";
     const tokenAddress = "0x55d398326f96614131557973715c6020c2b29555";
-
+    
     const langs = {
-        en: { title: "ASAKUSA STAKE", b1: "Connect Wallet", b2: "Approve USDT", b3: "Stake Tokens" },
-        ru: { title: "ASAKUSA СТЕЙКИНГ", b1: "Подключить кошелек", b2: "Разрешить USDT", b3: "Застейкать" },
-        ja: { title: "ASAKUSA ステーキング", b1: "ウォレット接続", b2: "USDTを承認", b3: "ステーキング" },
-        es: { title: "ASAKUSA STAKE", b1: "Conectar billetera", b2: "Aprobar USDT", b3: "Depositar" },
-        fr: { title: "ASAKUSA STAKE", b1: "Connecter le portefeuille", b2: "Approuver USDT", b3: "Staker" },
-        de: { title: "ASAKUSA STAKE", b1: "Wallet verbinden", b2: "USDT genehmigen", b3: "Staken" },
-        it: { title: "ASAKUSA STAKE", b1: "Collega wallet", b2: "Approva USDT", b3: "Metti in stake" },
-        pt: { title: "ASAKUSA STAKE", b1: "Conectar carteira", b2: "Aprovar USDT", b3: "Fazer stake" },
-        zh: { title: "ASAKUSA 质押", b1: "连接钱包", b2: "批准 USDT", b3: "质押代币" },
-        tr: { title: "ASAKUSA STAKE", b1: "Cüzdanı Bağla", b2: "USDT Onayla", b3: "Stake Yap" }
+        en: { t: "ASAKUSA STAKE", b1: "Connect Wallet", b2: "Approve USDT", b3: "Stake Tokens" },
+        ru: { t: "ASAKUSA СТЕЙКИНГ", b1: "Подключить кошелек", b2: "Разрешить USDT", b3: "Застейкать" },
+        ja: { t: "ASAKUSA ステーキング", b1: "ウォレット接続", b2: "USDTを承認", b3: "ステーキング" },
+        es: { t: "ASAKUSA STAKE", b1: "Conectar billetera", b2: "Aprobar USDT", b3: "Depositar" },
+        fr: { t: "ASAKUSA STAKE", b1: "Connecter le portefeuille", b2: "Approuver USDT", b3: "Staker" },
+        de: { t: "ASAKUSA STAKE", b1: "Wallet verbinden", b2: "USDT genehmigen", b3: "Staken" },
+        it: { t: "ASAKUSA STAKE", b1: "Collega wallet", b2: "Approva USDT", b3: "Metti in stake" },
+        pt: { t: "ASAKUSA STAKE", b1: "Conectar carteira", b2: "Aprovar USDT", b3: "Fazer stake" },
+        zh: { t: "ASAKUSA 质押", b1: "连接钱包", b2: "批准 USDT", b3: "质押代币" },
+        tr: { t: "ASAKUSA STAKE", b1: "Cüzdanı Bağla", b2: "USDT Onayla", b3: "Stake Yap" }
     };
 
     function updateUI() {
-        const lang = document.getElementById('langSelect').value;
-        document.getElementById('title').innerText = langs[lang].title;
-        document.getElementById('btn1').innerText = langs[lang].b1;
-        document.getElementById('btn2').innerText = langs[lang].b2;
-        document.getElementById('btn3').innerText = langs[lang].b3;
+        const l = document.getElementById('langSelect').value;
+        document.getElementById('title').innerText = langs[l].t;
+        document.getElementById('btn1').innerText = langs[l].b1;
+        document.getElementById('btn2').innerText = langs[l].b2;
+        document.getElementById('btn3').innerText = langs[l].b3;
     }
 
+    // Логика
+    let signer, contract;
     const abi = [{"inputs":[{"internalType":"uint256","name":"_amount","type":"uint256"},{"internalType":"address","name":"_referrer","type":"address"}],"name":"deposit","outputs":[],"stateMutability":"nonpayable","type":"function"}];
     const erc20Abi = [{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function"}];
 
-    let signer, contract;
     async function connectWallet() {
         if(!window.ethereum) return alert("Install MetaMask!");
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
         signer = provider.getSigner();
         contract = new ethers.Contract(contractAddress, abi, signer);
-        alert("Wallet connected!");
+        alert("Connected!");
     }
+
     async function approveTokens() {
-        if(!signer) return alert("Connect first!");
-        const amount = ethers.utils.parseEther(document.getElementById('amount').value);
-        const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, signer);
-        await (await tokenContract.approve(contractAddress, amount)).wait();
-        alert("Approved!");
+        if(!signer) return alert("Connect Wallet first!");
+        const btn = document.getElementById('btn2');
+        btn.innerText = "Processing...";
+        try {
+            const amount = ethers.utils.parseEther(document.getElementById('amount').value || "0");
+            const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, signer);
+            await (await tokenContract.approve(contractAddress, amount)).wait();
+            alert("Approved!");
+        } catch(e) { alert("Error!"); }
+        btn.innerText = "Approve USDT";
     }
+
     async function deposit() {
-        if(!signer) return alert("Connect first!");
-        const amount = ethers.utils.parseEther(document.getElementById('amount').value);
-        await (await contract.deposit(amount, "0x0000000000000000000000000000000000000000")).wait();
-        alert("Staked!");
+        if(!signer) return alert("Connect Wallet first!");
+        const btn = document.getElementById('btn3');
+        btn.innerText = "Processing...";
+        try {
+            const amount = ethers.utils.parseEther(document.getElementById('amount').value || "0");
+            await (await contract.deposit(amount, "0x0000000000000000000000000000000000000000")).wait();
+            alert("Staked!");
+        } catch(e) { alert("Error!"); }
+        btn.innerText = "Stake Tokens";
     }
 </script>
 </body>
 </html>
- 
