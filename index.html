@@ -2,64 +2,60 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title id="docTitle">Asakusa Staking</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
-    <script src="https://unpkg.com/@walletconnect/web3modal@1.9.12/dist/index.js"></script>
-    <script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/index.min.js"></script>
+    <title>Asakusa Staking</title>
     <style>
-        :root { --bg: #0f0f12; --panel: #17171e; --fire: #ff3e3e; }
-        body { background: var(--bg); color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
-        .panel { background: var(--panel); padding: 30px; border-radius: 8px; width: 300px; margin-top: 50px; }
-        .btn-action { background: var(--fire); border: none; padding: 12px; width: 100%; color: white; cursor: pointer; margin-top: 10px; }
+        :root { --fire: #ff4500; --bg: #0d0d0f; }
+        body { margin: 0; height: 100vh; background: var(--bg); color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
+        .fire-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at bottom, #ff4500 0%, #0d0d0f 70%); z-index: -1; animation: flicker 3s infinite alternate; }
+        @keyframes flicker { 0% { opacity: 0.6; transform: scale(1); } 100% { opacity: 1; transform: scale(1.05); } }
+        header { width: 100%; padding: 20px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
+        .panel { background: rgba(0,0,0,0.7); padding: 40px; border-radius: 15px; width: 300px; margin-top: 100px; border: 1px solid var(--fire); text-align: center; }
+        .btn-action { background: var(--fire); border: none; padding: 15px; width: 100%; color: white; font-weight: bold; cursor: pointer; border-radius: 5px; margin-top: 15px; transition: 0.3s; }
+        .btn-action:hover { box-shadow: 0 0 15px var(--fire); }
+        select { background: #000; color: #fff; border: 1px solid var(--fire); padding: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
+    <div class="fire-bg"></div>
     <header>
-        <select id="langSelect" onchange="updateLanguage()">
-            <option value="en">English</option>
-            <option value="ru">Русский</option>
+        <div style="font-weight: bold; color: var(--fire); font-size: 20px;">浅草 ASAKUSA</div>
+        <select id="langSelect" onchange="updateUI()">
+            <option value="en">English</option> <option value="ru">Русский</option>
+            <option value="ja">日本語</option> <option value="es">Español</option>
+            <option value="fr">Français</option> <option value="de">Deutsch</option>
+            <option value="it">Italiano</option> <option value="pt">Português</option>
+            <option value="zh">简体中文</option> <option value="tr">Türkçe</option>
         </select>
-        <button id="connectBtn">Connect Wallet</button>
     </header>
     <div class="panel">
-        <h2 id="stkTitle">Staking</h2>
-        <input type="number" id="amount" placeholder="0.0">
-        <button class="btn-action" id="depositBtn">Deposit</button>
+        <h2 id="titleText">Staking</h2>
+        <input type="number" id="amount" style="width:100%; padding:10px; background:#222; border:1px solid #444; color:#fff; box-sizing:border-box;" placeholder="0.0">
+        <button class="btn-action" id="btnText" onclick="connect()">Connect Wallet</button>
     </div>
 
     <script>
-        const WALLETCONNECT_PROJECT_ID = "7720042f0744733e5304d645283303a8";
-        const translations = {
-            en: { title: "Asakusa Staking", connect: "Connect Wallet", stk: "Staking", dep: "Deposit" },
-            ru: { title: "Стейкинг Асакуса", connect: "Войти в Отряд", stk: "Стейкинг", dep: "Внести Депозит" }
+        const langs = {
+            en: { t: "Staking", c: "Connect Wallet" }, ru: { t: "Стейкинг", c: "Войти в отряд" },
+            ja: { t: "ステーキング", c: "分隊に参加する" }, es: { t: "Staking", c: "Conectar billetera" },
+            fr: { t: "Staking", c: "Connecter le portefeuille" }, de: { t: "Staking", c: "Wallet verbinden" },
+            it: { t: "Staking", c: "Connetti wallet" }, pt: { t: "Staking", c: "Conectar carteira" },
+            zh: { t: "质押", c: "连接钱包" }, tr: { t: "Staking", c: "Cüzdanı Bağla" }
         };
 
-        function updateLanguage() {
-            const lang = document.getElementById('langSelect').value;
-            document.getElementById('docTitle').innerText = translations[lang].title;
-            document.getElementById('connectBtn').innerText = translations[lang].connect;
-            document.getElementById('stkTitle').innerText = translations[lang].stk;
-            document.getElementById('depositBtn').innerText = translations[lang].dep;
+        function updateUI() {
+            const l = document.getElementById('langSelect').value;
+            document.getElementById('titleText').innerText = langs[l].t;
+            document.getElementById('btnText').innerText = langs[l].c;
         }
-
-        // Web3 логика
-        const modal = new window.Web3Modal.default({
-            cacheProvider: true,
-            providerOptions: {
-                walletconnect: {
-                    package: window.WalletConnectProvider.default,
-                    options: { projectId: WALLETCONNECT_PROJECT_ID, rpc: { 56: "https://bsc-dataseed.binance.org/" } }
-                }
-            }
-        });
-
-        document.getElementById('connectBtn').onclick = async () => {
-            const instance = await modal.connect();
-            const provider = new ethers.providers.Web3Provider(instance);
-            alert("Wallet Connected!");
-        };
-
-        window.onload = updateLanguage;
+        
+        async function connect() {
+            if (window.ethereum) {
+                try {
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    alert("Connected: " + accounts[0]);
+                } catch (e) { alert("Error!"); }
+            } else { alert("MetaMask not found!"); }
+        }
     </script>
 </body>
 </html>
