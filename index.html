@@ -4,116 +4,58 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asakusa Finance | Yield Platform</title>
-    <!-- ИСПРАВЛЕННЫЙ CDN для Ethers.js -->
+    <!-- Библиотеки -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="https://unpkg.com/web3modal@1.9.12/dist/index.js"></script>
+    <script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
-        
-        body { 
-            background: radial-gradient(circle, #1a0505 0%, #050505 100%); 
-            color: #fff; 
-            font-family: 'Inter', sans-serif; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            margin: 0; 
-        }
-        .panel { 
-            background: rgba(15, 15, 15, 0.95); 
-            padding: 40px; 
-            border: 1px solid #ff4500; 
-            border-radius: 20px; 
-            width: 350px; 
-            text-align: center; 
-            box-shadow: 0 10px 30px rgba(255, 69, 0, 0.15);
-        }
-        #langSelect { 
-            background: #222; color: #fff; border: 1px solid #444; 
-            padding: 8px; border-radius: 5px; margin-bottom: 20px; width: 100%; cursor: pointer;
-        }
-        h2 { margin-bottom: 25px; letter-spacing: 1px; color: #ff4500; font-size: 24px;}
-        input { 
-            width: 100%; padding: 15px; margin-bottom: 15px; 
-            background: #000; border: 1px solid #333; color: #fff; 
-            border-radius: 8px; box-sizing: border-box; font-size: 16px;
-        }
-        button { 
-            background: #ff4500; color: #fff; border: none; padding: 15px; 
-            width: 100%; cursor: pointer; font-weight: 700; margin-top: 10px; 
-            border-radius: 8px; transition: all 0.3s;
-        }
-        button:hover { background: #ff6a33; transform: translateY(-2px); }
-        
-        .support-btn {
-            background: transparent;
-            border: 1px solid #ff4500;
-            color: #ff4500;
-            margin-top: 20px;
-            font-size: 14px;
-        }
-        .support-btn:hover { background: #ff4500; color: #fff; }
+        body { background: radial-gradient(circle, #1a0505 0%, #050505 100%); color: #fff; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .panel { background: rgba(15, 15, 15, 0.95); padding: 40px; border: 1px solid #ff4500; border-radius: 20px; width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(255, 69, 0, 0.15); }
+        input { width: 100%; padding: 15px; margin-bottom: 15px; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; box-sizing: border-box; }
+        button { background: #ff4500; color: #fff; border: none; padding: 15px; width: 100%; cursor: pointer; font-weight: 700; margin-top: 10px; border-radius: 8px; transition: all 0.3s; }
+        button:hover { background: #ff6a33; }
+        .support-btn { background: transparent; border: 1px solid #ff4500; color: #ff4500; margin-top: 20px; font-size: 14px; }
     </style>
 </head>
 <body>
 
 <div class="panel">
-    <select id="langSelect" onchange="updateUI()">
-        <option value="en">English</option><option value="ru">Русский</option>
-        <option value="ja">日本語</option><option value="es">Español</option>
-        <option value="fr">Français</option><option value="de">Deutsch</option>
-        <option value="it">Italiano</option><option value="pt">Português</option>
-        <option value="zh">中文</option><option value="tr">Türkçe</option>
-    </select>
     <h2 id="title">ASAKUSA STAKE</h2>
     <input type="number" id="amount" placeholder="Amount USDT">
     <button id="btn1" onclick="connectWallet()">Connect Wallet</button>
     <button id="btn2" onclick="approveTokens()">Approve USDT</button>
     <button id="btn3" onclick="deposit()">Stake Tokens</button>
-    
     <a href="https://t.me/asakusafinance" target="_blank" style="text-decoration: none;">
-        <button class="support-btn" id="btnSup">💬 Join Community</button>
+        <button class="support-btn">💬 Join Community</button>
     </a>
 </div>
 
 <script>
     const contractAddress = "0xADEd6D7d0571f5407d57D064f2e964C39B7aa5a7f";
     const tokenAddress = "0x55d398326f96614131557973715c6020c2b29555";
-
-    const langs = {
-        en: { t: "ASAKUSA STAKE", b1: "Connect Wallet", b2: "Approve USDT", b3: "Stake Tokens", sup: "💬 Join Community" },
-        ru: { t: "ASAKUSA СТЕЙКИНГ", b1: "Подключить кошелек", b2: "Разрешить USDT", b3: "Застейкать", sup: "💬 Наше сообщество" },
-        ja: { t: "ASAKUSA ステーキング", b1: "ウォレット接続", b2: "USDTを承認", b3: "ステーキング", sup: "💬 コミュニティ" },
-        es: { t: "ASAKUSA STAKE", b1: "Conectar billetera", b2: "Aprobar USDT", b3: "Depositar", sup: "💬 Comunidad" },
-        fr: { t: "ASAKUSA STAKE", b1: "Connecter le portefeuille", b2: "Approuver USDT", b3: "Staker", sup: "💬 Communauté" },
-        de: { t: "ASAKUSA STAKE", b1: "Wallet verbinden", b2: "USDT genehmigen", b3: "Staken", sup: "💬 Community" },
-        it: { t: "ASAKUSA STAKE", b1: "Collega wallet", b2: "Approva USDT", b3: "Metti in stake", sup: "💬 Community" },
-        pt: { t: "ASAKUSA STAKE", b1: "Conectar carteira", b2: "Aprovar USDT", b3: "Fazer stake", sup: "💬 Comunidade" },
-        zh: { t: "ASAKUSA 质押", b1: "连接钱包", b2: "批准 USDT", b3: "质押代币", sup: "💬 加入社区" },
-        tr: { t: "ASAKUSA STAKE", b1: "Cüzdanı Bağla", b2: "USDT Onayla", b3: "Stake Yap", sup: "💬 Topluluk" }
-    };
-
-    function updateUI() {
-        const l = document.getElementById('langSelect').value;
-        document.getElementById('title').innerText = langs[l].t;
-        document.getElementById('btn1').innerText = langs[l].b1;
-        document.getElementById('btn2').innerText = langs[l].b2;
-        document.getElementById('btn3').innerText = langs[l].b3;
-        document.getElementById('btnSup').innerText = langs[l].sup;
-    }
+    
+    // Настройка Web3Modal
+    const Web3Modal = window.Web3Modal.default;
+    const web3Modal = new Web3Modal({
+        cacheProvider: false,
+        providerOptions: {
+            walletconnect: { package: window.WalletConnectProvider.default, options: { infuraId: "YOUR_INFURA_ID" } }
+        }
+    });
 
     let signer, contract;
     const abi = [{"inputs":[{"internalType":"uint256","name":"_amount","type":"uint256"},{"internalType":"address","name":"_referrer","type":"address"}],"name":"deposit","outputs":[],"stateMutability":"nonpayable","type":"function"}];
     const erc20Abi = [{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function"}];
 
     async function connectWallet() {
-        if(!window.ethereum) return alert("MetaMask не найден! Пожалуйста, установите расширение.");
         try {
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
-            await provider.send("eth_requestAccounts", []);
+            const instance = await web3Modal.connect();
+            const provider = new ethers.providers.Web3Provider(instance);
             signer = provider.getSigner();
             contract = new ethers.Contract(contractAddress, abi, signer);
-            alert("Wallet Connected!");
+            alert("Wallet Connected Successfully!");
         } catch(e) { console.error(e); alert("Ошибка подключения!"); }
     }
 
