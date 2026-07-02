@@ -2,29 +2,70 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Asakusa Staking</title>
+    <title>Asakusa Finance | Yield Platform</title>
     <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"></script>
     <style>
-        body { background: #050505; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .panel { background: #111; padding: 30px; border: 2px solid #ff4500; border-radius: 10px; width: 350px; text-align: center; }
-        input { width: 100%; padding: 12px; margin: 15px 0; background: #000; border: 1px solid #444; color: #fff; border-radius: 5px; box-sizing: border-box; }
-        button { background: #ff4500; color: #fff; border: none; padding: 12px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; border-radius: 5px; }
-        button:hover { background: #ff6a33; }
-        h2 { margin-top: 0; }
+        /* Современный стиль */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        
+        body { 
+            background: radial-gradient(circle, #1a0505 0%, #050505 100%); 
+            color: #fff; 
+            font-family: 'Inter', sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+        .panel { 
+            background: rgba(15, 15, 15, 0.95); 
+            padding: 40px; 
+            border: 1px solid #ff4500; 
+            border-radius: 20px; 
+            width: 350px; 
+            text-align: center; 
+            box-shadow: 0 10px 30px rgba(255, 69, 0, 0.15);
+        }
+        h2 { margin-bottom: 25px; letter-spacing: 1px; color: #ff4500; }
+        input { 
+            width: 100%; 
+            padding: 15px; 
+            margin-bottom: 20px; 
+            background: #000; 
+            border: 1px solid #333; 
+            color: #fff; 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            font-size: 16px;
+        }
+        button { 
+            background: #ff4500; 
+            color: #fff; 
+            border: none; 
+            padding: 15px; 
+            width: 100%; 
+            cursor: pointer; 
+            font-weight: 700; 
+            margin-top: 10px; 
+            border-radius: 8px; 
+            transition: all 0.3s;
+        }
+        button:hover { background: #ff6a33; transform: translateY(-2px); }
     </style>
 </head>
 <body>
 
 <div class="panel">
-    <h2>Asakusa Staking</h2>
-    <input type="number" id="amount" placeholder="Введите количество USDT">
-    <button onclick="connectWallet()">1. Подключить кошелек</button>
-    <button onclick="approveTokens()">2. Разрешить (Approve)</button>
-    <button onclick="deposit()">3. Застейкать</button>
+    <h2>ASAKUSA STAKE</h2>
+    <input type="number" id="amount" placeholder="Количество USDT">
+    <button onclick="connectWallet()">1. Connect Wallet</button>
+    <button onclick="approveTokens()">2. Approve USDT</button>
+    <button onclick="deposit()">3. Stake Tokens</button>
 </div>
 
 <script>
-    // --- НАСТРОЙКИ (ВЖИВЛЕНЫ) ---
+    // --- ТВОИ НАСТРОЙКИ ---
     const contractAddress = "0xADEd6D7d0571f5407d57D064f2e964C39B7aa5a7f";
     const tokenAddress = "0x55d398326f96614131557973715c6020c2b29555";
 
@@ -57,16 +98,16 @@
         const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, signer);
         const tx = await tokenContract.approve(contractAddress, amount);
         await tx.wait();
-        alert("Разрешение (Approve) успешно получено!");
+        alert("Успешно: USDT одобрен!");
     }
 
     async function deposit() {
         if(!signer) return alert("Сначала подключите кошелек!");
         const amount = ethers.utils.parseEther(document.getElementById('amount').value);
-        const ref = "0x0000000000000000000000000000000000000000"; // Можно добавить логику реферала позже
+        const ref = "0x0000000000000000000000000000000000000000";
         const tx = await contract.deposit(amount, ref);
         await tx.wait();
-        alert("Стейкинг прошел успешно!");
+        alert("Успешно: Депозит принят!");
     }
 </script>
 </body>
