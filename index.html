@@ -2,8 +2,10 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asakusa Finance | Yield Platform</title>
-    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"></script>
+    <!-- ИСПРАВЛЕННЫЙ CDN для Ethers.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
         
@@ -69,8 +71,8 @@
     <button id="btn2" onclick="approveTokens()">Approve USDT</button>
     <button id="btn3" onclick="deposit()">Stake Tokens</button>
     
-    <a href="https://t.me/asakusafinance" target="_blank">
-        <button class="support-btn">💬 Join Community</button>
+    <a href="https://t.me/asakusafinance" target="_blank" style="text-decoration: none;">
+        <button class="support-btn" id="btnSup">💬 Join Community</button>
     </a>
 </div>
 
@@ -97,7 +99,7 @@
         document.getElementById('btn1').innerText = langs[l].b1;
         document.getElementById('btn2').innerText = langs[l].b2;
         document.getElementById('btn3').innerText = langs[l].b3;
-        document.querySelector('.support-btn').innerText = langs[l].sup;
+        document.getElementById('btnSup').innerText = langs[l].sup;
     }
 
     let signer, contract;
@@ -105,27 +107,35 @@
     const erc20Abi = [{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function"}];
 
     async function connectWallet() {
-        if(!window.ethereum) return alert("Install MetaMask!");
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-        signer = provider.getSigner();
-        contract = new ethers.Contract(contractAddress, abi, signer);
-        alert("Wallet Connected!");
+        if(!window.ethereum) return alert("MetaMask не найден! Пожалуйста, установите расширение.");
+        try {
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            await provider.send("eth_requestAccounts", []);
+            signer = provider.getSigner();
+            contract = new ethers.Contract(contractAddress, abi, signer);
+            alert("Wallet Connected!");
+        } catch(e) { console.error(e); alert("Ошибка подключения!"); }
     }
 
     async function approveTokens() {
         if(!signer) return alert("Connect first!");
-        const amount = ethers.utils.parseEther(document.getElementById('amount').value || "0");
-        const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, signer);
-        await (await tokenContract.approve(contractAddress, amount)).wait();
-        alert("Approved!");
+        try {
+            const amount = ethers.utils.parseEther(document.getElementById('amount').value || "0");
+            const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, signer);
+            const tx = await tokenContract.approve(contractAddress, amount);
+            await tx.wait();
+            alert("Approved!");
+        } catch(e) { console.error(e); alert("Error!"); }
     }
 
     async function deposit() {
         if(!signer) return alert("Connect first!");
-        const amount = ethers.utils.parseEther(document.getElementById('amount').value || "0");
-        await (await contract.deposit(amount, "0x0000000000000000000000000000000000000000")).wait();
-        alert("Staked!");
+        try {
+            const amount = ethers.utils.parseEther(document.getElementById('amount').value || "0");
+            const tx = await contract.deposit(amount, "0x0000000000000000000000000000000000000000");
+            await tx.wait();
+            alert("Staked!");
+        } catch(e) { console.error(e); alert("Error!"); }
     }
 </script>
 </body>
