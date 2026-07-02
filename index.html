@@ -1,17 +1,47 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asakusa Finance</title>
+    <title>Asakusa Finance | Yield Platform</title>
     <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"></script>
     <style>
-        :root { --main: #ff4500; --bg: #050505; }
-        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .panel { background: #111; padding: 30px; border: 1px solid #333; border-radius: 15px; width: 320px; text-align: center; }
-        select, input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #444; background: #000; color: #fff; }
-        button { background: var(--main); border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { opacity: 0.8; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        
+        body { 
+            background: radial-gradient(circle, #1a0505 0%, #050505 100%); 
+            color: #fff; 
+            font-family: 'Inter', sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+        .panel { 
+            background: rgba(15, 15, 15, 0.95); 
+            padding: 40px; 
+            border: 1px solid #ff4500; 
+            border-radius: 20px; 
+            width: 350px; 
+            text-align: center; 
+            box-shadow: 0 10px 30px rgba(255, 69, 0, 0.15);
+        }
+        #langSelect { 
+            background: #222; color: #fff; border: 1px solid #444; 
+            padding: 8px; border-radius: 5px; margin-bottom: 20px; width: 100%; cursor: pointer;
+        }
+        h2 { margin-bottom: 25px; letter-spacing: 1px; color: #ff4500; font-size: 24px;}
+        input { 
+            width: 100%; padding: 15px; margin-bottom: 15px; 
+            background: #000; border: 1px solid #333; color: #fff; 
+            border-radius: 8px; box-sizing: border-box; font-size: 16px;
+        }
+        button { 
+            background: #ff4500; color: #fff; border: none; padding: 15px; 
+            width: 100%; cursor: pointer; font-weight: 700; margin-top: 10px; 
+            border-radius: 8px; transition: all 0.3s;
+        }
+        button:hover { background: #ff6a33; transform: translateY(-2px); }
     </style>
 </head>
 <body>
@@ -25,7 +55,7 @@
         <option value="zh">中文</option><option value="tr">Türkçe</option>
     </select>
     <h2 id="title">ASAKUSA STAKE</h2>
-    <input type="number" id="amount" placeholder="Amount (USDT)">
+    <input type="number" id="amount" placeholder="Amount USDT">
     <button id="btn1" onclick="connectWallet()">Connect Wallet</button>
     <button id="btn2" onclick="approveTokens()">Approve USDT</button>
     <button id="btn3" onclick="deposit()">Stake Tokens</button>
@@ -34,7 +64,7 @@
 <script>
     const contractAddress = "0xADEd6D7d0571f5407d57D064f2e964C39B7aa5a7f";
     const tokenAddress = "0x55d398326f96614131557973715c6020c2b29555";
-    
+
     const langs = {
         en: { t: "ASAKUSA STAKE", b1: "Connect Wallet", b2: "Approve USDT", b3: "Stake Tokens" },
         ru: { t: "ASAKUSA СТЕЙКИНГ", b1: "Подключить кошелек", b2: "Разрешить USDT", b3: "Застейкать" },
@@ -56,7 +86,6 @@
         document.getElementById('btn3').innerText = langs[l].b3;
     }
 
-    // Логика
     let signer, contract;
     const abi = [{"inputs":[{"internalType":"uint256","name":"_amount","type":"uint256"},{"internalType":"address","name":"_referrer","type":"address"}],"name":"deposit","outputs":[],"stateMutability":"nonpayable","type":"function"}];
     const erc20Abi = [{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function"}];
@@ -67,32 +96,22 @@
         await provider.send("eth_requestAccounts", []);
         signer = provider.getSigner();
         contract = new ethers.Contract(contractAddress, abi, signer);
-        alert("Connected!");
+        alert("Wallet Connected!");
     }
 
     async function approveTokens() {
-        if(!signer) return alert("Connect Wallet first!");
-        const btn = document.getElementById('btn2');
-        btn.innerText = "Processing...";
-        try {
-            const amount = ethers.utils.parseEther(document.getElementById('amount').value || "0");
-            const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, signer);
-            await (await tokenContract.approve(contractAddress, amount)).wait();
-            alert("Approved!");
-        } catch(e) { alert("Error!"); }
-        btn.innerText = "Approve USDT";
+        if(!signer) return alert("Connect first!");
+        const amount = ethers.utils.parseEther(document.getElementById('amount').value || "0");
+        const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, signer);
+        await (await tokenContract.approve(contractAddress, amount)).wait();
+        alert("Approved!");
     }
 
     async function deposit() {
-        if(!signer) return alert("Connect Wallet first!");
-        const btn = document.getElementById('btn3');
-        btn.innerText = "Processing...";
-        try {
-            const amount = ethers.utils.parseEther(document.getElementById('amount').value || "0");
-            await (await contract.deposit(amount, "0x0000000000000000000000000000000000000000")).wait();
-            alert("Staked!");
-        } catch(e) { alert("Error!"); }
-        btn.innerText = "Stake Tokens";
+        if(!signer) return alert("Connect first!");
+        const amount = ethers.utils.parseEther(document.getElementById('amount').value || "0");
+        await (await contract.deposit(amount, "0x0000000000000000000000000000000000000000")).wait();
+        alert("Staked!");
     }
 </script>
 </body>
