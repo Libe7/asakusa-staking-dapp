@@ -8,25 +8,13 @@
     <script src="https://unpkg.com/web3modal@1.9.12/dist/index.js"></script>
     
     <style>
-        body { 
-            background: #050505; color: #fff; font-family: 'Segoe UI', sans-serif; 
-            display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; 
-        }
-        .panel { 
-            background: #111; padding: 30px; border: 1px solid #ff4500; border-radius: 15px; 
-            width: 320px; text-align: center; box-shadow: 0 0 20px rgba(255, 69, 0, 0.2);
-        }
-        h2 { margin-top: 0; color: #ff4500; }
-        input { 
-            width: 100%; padding: 12px; margin-bottom: 10px; background: #000; 
-            border: 1px solid #333; color: #fff; border-radius: 5px; box-sizing: border-box;
-        }
-        button { 
-            background: #ff4500; color: #fff; border: none; padding: 12px; width: 100%; 
-            cursor: pointer; font-weight: bold; margin-top: 10px; border-radius: 5px; transition: 0.3s;
-        }
-        button:hover { background: #cc3700; }
-        .status { margin-top: 15px; font-size: 12px; color: #888; }
+        body { background: #050505; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .panel { background: #111; padding: 30px; border: 1px solid #ff4500; border-radius: 15px; width: 320px; text-align: center; }
+        h2 { color: #ff4500; margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid #333; color: #fff; border-radius: 5px; box-sizing: border-box; }
+        button { background: #ff4500; color: #fff; border: none; padding: 12px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; border-radius: 5px; }
+        button:hover { background: #e03d00; }
+        #status { margin-top: 15px; font-size: 12px; color: #888; }
     </style>
 </head>
 <body>
@@ -37,11 +25,10 @@
     <button id="btnConnect" onclick="connectWallet()">Подключить кошелек</button>
     <button onclick="approveTokens()">Одобрить (Approve)</button>
     <button onclick="deposit()">Стейкинг (Stake)</button>
-    <div id="status" class="status">Кошелек не подключен</div>
+    <div id="status">Кошелек не подключен</div>
 </div>
 
 <script>
-    // --- НАСТРОЙКИ АДРЕСОВ ---
     const CONTRACT_ADDR = "0xADEd6D7d0571f5407d57D064f2e964C39B7aa5a7f";
     const TOKEN_ADDR = "0x55d398326f96614131557973715c6020c2b29555";
     
@@ -53,8 +40,7 @@
             const instance = await web3Modal.connect();
             const provider = new ethers.providers.Web3Provider(instance);
             signer = provider.getSigner();
-
-            // Безопасное создание контрактов с очисткой адресов
+            
             const safeC = ethers.utils.getAddress(CONTRACT_ADDR.trim());
             const safeT = ethers.utils.getAddress(TOKEN_ADDR.trim());
 
@@ -68,30 +54,38 @@
             document.getElementById('status').innerText = "Готов к работе";
         } catch (e) {
             console.error(e);
-            alert("Ошибка подключения: " + e.message);
+            alert("Ошибка: " + e.message);
         }
     }
 
     async function approveTokens() {
-        if(!tokenContract) return alert("Сначала подключите кошелек!");
+        if(!tokenContract) return alert("Подключите кошелек!");
         try {
-            const amount = ethers.utils.parseEther(document.getElementById('amount').value || "0");
+            const val = document.getElementById('amount').value;
+            if(!val) return alert("Введите сумму");
+            const amount = ethers.utils.parseEther(val);
             const tx = await tokenContract.approve(ethers.utils.getAddress(CONTRACT_ADDR.trim()), amount);
-            alert("Транзакция отправлена, ждите подтверждения...");
             await tx.wait();
             alert("Успешно одобрено!");
-        } catch(e) { alert("Ошибка при одобрении: " + e.message); }
+        } catch(e) { 
+            console.error(e); 
+            alert("Ошибка при одобрении: " + (e.reason || e.message)); 
+        }
     }
 
     async function deposit() {
-        if(!contract) return alert("Сначала подключите кошелек!");
+        if(!contract) return alert("Подключите кошелек!");
         try {
-            const amount = ethers.utils.parseEther(document.getElementById('amount').value || "0");
+            const val = document.getElementById('amount').value;
+            if(!val) return alert("Введите сумму");
+            const amount = ethers.utils.parseEther(val);
             const tx = await contract.deposit(amount, "0x0000000000000000000000000000000000000000");
-            alert("Транзакция отправлена, ждите подтверждения...");
             await tx.wait();
-            alert("Стейкинг прошел успешно!");
-        } catch(e) { alert("Ошибка при стейкинге: " + e.message); }
+            alert("Успешно застейкано!");
+        } catch(e) { 
+            console.error(e); 
+            alert("Ошибка при стейкинге: " + (e.reason || e.message)); 
+        }
     }
 </script>
 </body>
