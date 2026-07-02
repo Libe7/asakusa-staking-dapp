@@ -6,76 +6,75 @@
     <title>Asakusa Finance</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
-        body { background: #f9f9f9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .card { background: white; width: 100%; max-width: 420px; padding: 40px; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; border: 1px solid #eee; }
-        h1 { font-size: 20px; margin-bottom: 30px; color: #000; letter-spacing: -0.5px; }
-        input { width: 100%; padding: 16px; margin-bottom: 16px; border: 1px solid #e0e0e0; border-radius: 12px; font-size: 16px; box-sizing: border-box; outline: none; }
-        input:focus { border-color: #000; }
-        button { width: 100%; padding: 16px; margin-bottom: 12px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 14px; }
-        .btn-connect { background: #000; color: #fff; }
-        .btn-connect:hover { background: #333; }
-        .btn-action { background: #f4f4f4; color: #000; }
-        .btn-action:hover { background: #eaeaea; }
-        #status { margin-top: 20px; font-size: 12px; color: #888; }
+        body { background: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; color: #000; }
+        .card { width: 100%; max-width: 400px; padding: 40px; border: 1px solid #eaeaea; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; }
+        h1 { font-size: 24px; margin-bottom: 30px; letter-spacing: -0.5px; }
+        input { width: 100%; padding: 14px; margin-bottom: 20px; border: 1px solid #eaeaea; border-radius: 12px; font-size: 16px; box-sizing: border-box; outline: none; }
+        input:focus { border: 1px solid #000; }
+        button { width: 100%; padding: 14px; margin-bottom: 12px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: background 0.2s; font-size: 15px; }
+        .btn-black { background: #000; color: #fff; }
+        .btn-black:hover { background: #333; }
+        .btn-gray { background: #f4f4f4; color: #000; }
+        .btn-gray:hover { background: #e0e0e0; }
+        #status { margin-top: 20px; font-size: 14px; color: #666; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <h1>Asakusa Finance</h1>
-    <input type="number" id="amount" placeholder="Amount USDT">
-    <button class="btn-connect" onclick="connect()" id="btnConn">Connect Wallet</button>
-    <button class="btn-action" onclick="approve()">Approve USDT</button>
-    <button class="btn-action" onclick="stake()">Stake Tokens</button>
-    <div id="status">Disconnected</div>
+    <input type="number" id="amount" placeholder="Количество USDT">
+    <button class="btn-black" onclick="connectWallet()" id="btnConnect">Подключить кошелек</button>
+    <button class="btn-gray" onclick="approveTokens()">Одобрить USDT</button>
+    <button class="btn-gray" onclick="deposit()">Стейкинг</button>
+    <div id="status">Кошелек отключен</div>
 </div>
 
 <script>
-    // Тщательно очищенные адреса
-    const CONTRACT_ADDR = "0xADEd6D7d0571f5407d57D064f2e964C39B7aa5a7f".trim();
-    const TOKEN_ADDR = "0x55d398326f96614131557973715c6020c2b29555".trim();
+    // Жестко задаем адреса. Метод getAddress сам исправит контрольную сумму.
+    const CONTRACT_ADDR = "0xADEd6D7d0571f5407d57D064f2e964C39B7aa5a7f";
+    const USDT_ADDR = "0x55d398326f96614131557973715c6020c2b29555";
     
     let signer;
 
-    async function connect() {
-        if (!window.ethereum) return alert("Install MetaMask");
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-        signer = provider.getSigner();
-        document.getElementById("btnConn").innerText = "Wallet Connected";
-        document.getElementById("status").innerText = "Connected";
-    }
-
-    async function getContract(addr, abi) {
-        // Дополнительная защита: убеждаемся, что адрес чист перед созданием контракта
-        const cleanAddr = ethers.utils.getAddress(addr);
-        return new ethers.Contract(cleanAddr, abi, signer);
-    }
-
-    async function approve() {
-        if (!signer) return alert("Connect first");
+    async function connectWallet() {
+        if (!window.ethereum) return alert("Установите MetaMask!");
         try {
-            const abi = ["function approve(address spender, uint256 amount) external returns (bool)"];
-            const contract = await getContract(TOKEN_ADDR, abi);
-            const val = document.getElementById("amount").value;
-            const amount = ethers.utils.parseEther(val || "0");
-            const tx = await contract.approve(ethers.utils.getAddress(CONTRACT_ADDR), amount);
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            await provider.send("eth_requestAccounts", []);
+            signer = provider.getSigner();
+            document.getElementById('btnConnect').innerText = "Кошелек подключен";
+            document.getElementById('status').innerText = "Готово к работе";
+        } catch (e) { alert("Ошибка: " + e.message); }
+    }
+
+    async function approveTokens() {
+        if(!signer) return alert("Подключите кошелек!");
+        try {
+            const val = document.getElementById('amount').value || "0";
+            const amount = ethers.utils.parseEther(val);
+            // Используем getAddress для исправления checksum
+            const tokenContract = new ethers.Contract(ethers.utils.getAddress(USDT_ADDR), 
+                ["function approve(address spender, uint256 amount) external returns (bool)"], signer);
+            
+            const tx = await tokenContract.approve(ethers.utils.getAddress(CONTRACT_ADDR), amount);
             await tx.wait();
-            alert("Success");
-        } catch (e) { alert("Error: " + e.message); }
+            alert("Успешно одобрено!");
+        } catch(e) { alert("Ошибка: " + e.message); }
     }
 
-    async function stake() {
-        if (!signer) return alert("Connect first");
+    async function deposit() {
+        if(!signer) return alert("Подключите кошелек!");
         try {
-            const abi = ["function deposit(uint256 _amount, address _referrer) external"];
-            const contract = await getContract(CONTRACT_ADDR, abi);
-            const val = document.getElementById("amount").value;
-            const amount = ethers.utils.parseEther(val || "0");
+            const val = document.getElementById('amount').value || "0";
+            const amount = ethers.utils.parseEther(val);
+            const contract = new ethers.Contract(ethers.utils.getAddress(CONTRACT_ADDR), 
+                ["function deposit(uint256 _amount, address _referrer) external"], signer);
+            
             const tx = await contract.deposit(amount, "0x0000000000000000000000000000000000000000");
             await tx.wait();
-            alert("Success");
-        } catch (e) { alert("Error: " + e.message); }
+            alert("Успешно застейкано!");
+        } catch(e) { alert("Ошибка: " + e.message); }
     }
 </script>
 </body>
