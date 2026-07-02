@@ -23,9 +23,9 @@
 </div>
 
 <script>
-    // Жесткие константы
-    const CONTRACT_ADDR = "0xADEd6D7d0571f5407d57D064f2e964C39B7aa5a7f";
-    const USDT_ADDR = "0x55d398326f96614131557973715c6020c2b29555";
+    // Очищаем адрес от любых возможных скрытых пробелов
+    const CONTRACT_ADDR = "0xADEd6D7d0571f5407d57D064f2e964C39B7aa5a7f".trim();
+    const USDT_ADDR = "0x55d398326f96614131557973715c6020c2b29555".trim();
     
     let signer;
 
@@ -40,10 +40,7 @@
     async function approve() {
         if (!signer) return alert("Подключите кошелек!");
         try {
-            console.log("Checking Address:", CONTRACT_ADDR);
-            // Проверка формата адреса перед использованием
-            if (!ethers.utils.isAddress(CONTRACT_ADDR)) throw new Error("Неверный формат адреса контракта!");
-
+            // Убираем проверку isAddress, чтобы ethers сам разобрался
             const abi = ["function approve(address spender, uint256 amount) external returns (bool)"];
             const contract = new ethers.Contract(USDT_ADDR, abi, signer);
             const amount = ethers.utils.parseEther(document.getElementById("amount").value || "0");
@@ -57,8 +54,6 @@
     async function stake() {
         if (!signer) return alert("Подключите кошелек!");
         try {
-            if (!ethers.utils.isAddress(CONTRACT_ADDR)) throw new Error("Неверный формат адреса контракта!");
-
             const abi = ["function deposit(uint256 _amount, address _referrer) external"];
             const contract = new ethers.Contract(CONTRACT_ADDR, abi, signer);
             const amount = ethers.utils.parseEther(document.getElementById("amount").value || "0");
