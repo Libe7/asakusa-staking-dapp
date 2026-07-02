@@ -2,64 +2,84 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Staking App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asakusa Finance | Staking</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    
     <style>
-        body { background: #000; color: #fff; font-family: Arial; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .box { border: 1px solid #ff4500; padding: 20px; width: 300px; text-align: center; border-radius: 10px; }
-        button { background: #ff4500; border: none; padding: 10px; width: 100%; color: white; margin-top: 10px; cursor: pointer; border-radius: 5px; }
-        input { width: 90%; padding: 10px; margin-bottom: 10px; background: #222; border: 1px solid #444; color: white; }
+        :root { --primary-color: #000000; --accent-color: #0070f3; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #ffffff; color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { width: 100%; max-width: 400px; padding: 40px; border: 1px solid #eaeaea; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); text-align: center; }
+        h1 { font-size: 24px; margin-bottom: 30px; letter-spacing: -1px; }
+        input { width: 100%; padding: 15px; margin-bottom: 20px; border: 1px solid #eaeaea; border-radius: 12px; font-size: 16px; box-sizing: border-box; outline: none; }
+        button { width: 100%; padding: 15px; margin-bottom: 10px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .btn-main { background: var(--primary-color); color: #fff; }
+        .btn-main:hover { background: #333; }
+        .btn-sec { background: #f4f4f4; color: #000; }
+        .btn-sec:hover { background: #e0e0e0; }
+        #status { margin-top: 20px; font-size: 14px; color: #666; }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h3>ASAKUSA STAKE</h3>
+<div class="card">
+    <h1>Asakusa Stake</h1>
     <input type="number" id="amount" placeholder="Количество USDT">
-    <button onclick="connect()">Подключить кошелек</button>
-    <button onclick="approve()">Одобрить (Approve)</button>
-    <button onclick="stake()">Стейкинг (Stake)</button>
-    <p id="msg" style="font-size: 12px; color: #aaa;"></p>
+    <button class="btn-main" onclick="connectWallet()" id="btnConnect">Подключить кошелек</button>
+    <button class="btn-sec" onclick="approveTokens()">Одобрить USDT</button>
+    <button class="btn-sec" onclick="deposit()">Стейкинг</button>
+    <div id="status">Кошелек не подключен</div>
 </div>
 
 <script>
+    // КОНФИГУРАЦИЯ
     const CONTRACT_ADDR = "0xADEd6D7d0571f5407d57D064f2e964C39B7aa5a7f";
     const USDT_ADDR = "0x55d398326f96614131557973715c6020c2b29555";
     
-    let signer;
+    let signer, contract, tokenContract;
 
-    async function connect() {
-        if (!window.ethereum) return alert("Установите MetaMask");
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-        signer = provider.getSigner();
-        document.getElementById("msg").innerText = "Подключено: " + (await signer.getAddress()).slice(0,6) + "...";
+    async function connectWallet() {
+        if (!window.ethereum) return alert("Установите MetaMask!");
+        try {
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            await provider.send("eth_requestAccounts", []);
+            signer = provider.getSigner();
+            
+            // Чистим адреса от лишних пробелов и проверяем их
+            const safeC = ethers.utils.getAddress(CONTRACT_ADDR.trim());
+            const safeT = ethers.utils.getAddress(USDT_ADDR.trim());
+
+            const abi = ["function deposit(uint256 _amount, address _referrer) external"];
+            const abiErc = ["function approve(address spender, uint256 amount) external returns (bool)"];
+
+            contract = new ethers.Contract(safeC, abi, signer);
+            tokenContract = new ethers.Contract(safeT, abiErc, signer);
+            
+            document.getElementById('btnConnect').innerText = "Кошелек подключен";
+            document.getElementById('status').innerText = "Готово к работе";
+        } catch (e) { alert("Ошибка подключения: " + e.message); }
     }
 
-    async function approve() {
-        if (!signer) return alert("Подключите кошелек!");
-        const abi = ["function approve(address spender, uint256 amount) external returns (bool)"];
-        const contract = new ethers.Contract(USDT_ADDR, abi, signer);
-        const amount = ethers.utils.parseEther(document.getElementById("amount").value || "0");
-        
+    async function approveTokens() {
+        if(!tokenContract) return alert("Подключите кошелек!");
         try {
-            const tx = await contract.approve(CONTRACT_ADDR, amount);
+            const val = document.getElementById('amount').value || "0";
+            const amount = ethers.utils.parseEther(val);
+            const tx = await tokenContract.approve(ethers.utils.getAddress(CONTRACT_ADDR.trim()), amount);
             await tx.wait();
-            alert("Успешно одобрено!");
-        } catch (e) { alert("Ошибка: " + e.message); }
+            alert("Успешно!");
+        } catch(e) { alert("Ошибка: " + e.message); }
     }
 
-    async function stake() {
-        if (!signer) return alert("Подключите кошелек!");
-        const abi = ["function deposit(uint256 _amount, address _referrer) external"];
-        const contract = new ethers.Contract(CONTRACT_ADDR, abi, signer);
-        const amount = ethers.utils.parseEther(document.getElementById("amount").value || "0");
-        
+    async function deposit() {
+        if(!contract) return alert("Подключите кошелек!");
         try {
+            const val = document.getElementById('amount').value || "0";
+            const amount = ethers.utils.parseEther(val);
             const tx = await contract.deposit(amount, "0x0000000000000000000000000000000000000000");
             await tx.wait();
-            alert("Успешно застейкано!");
-        } catch (e) { alert("Ошибка: " + e.message); }
+            alert("Успешно!");
+        } catch(e) { alert("Ошибка: " + e.message); }
     }
 </script>
 </body>
