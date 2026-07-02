@@ -2,33 +2,51 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asakusa Finance</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <script src="https://unpkg.com/web3modal@1.9.12/dist/index.js"></script>
+    
     <style>
-        body { background: #050505; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .panel { background: #111; padding: 30px; border: 1px solid #ff4500; border-radius: 15px; width: 320px; text-align: center; }
-        input { width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid #333; color: #fff; border-radius: 5px; box-sizing: border-box; }
-        button { background: #ff4500; color: #fff; border: none; padding: 12px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; border-radius: 5px; }
+        body { 
+            background: #050505; color: #fff; font-family: 'Segoe UI', sans-serif; 
+            display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; 
+        }
+        .panel { 
+            background: #111; padding: 30px; border: 1px solid #ff4500; border-radius: 15px; 
+            width: 320px; text-align: center; box-shadow: 0 0 20px rgba(255, 69, 0, 0.2);
+        }
+        h2 { margin-top: 0; color: #ff4500; }
+        input { 
+            width: 100%; padding: 12px; margin-bottom: 10px; background: #000; 
+            border: 1px solid #333; color: #fff; border-radius: 5px; box-sizing: border-box;
+        }
+        button { 
+            background: #ff4500; color: #fff; border: none; padding: 12px; width: 100%; 
+            cursor: pointer; font-weight: bold; margin-top: 10px; border-radius: 5px; transition: 0.3s;
+        }
+        button:hover { background: #cc3700; }
+        .status { margin-top: 15px; font-size: 12px; color: #888; }
     </style>
 </head>
 <body>
 
 <div class="panel">
     <h2>ASAKUSA STAKE</h2>
-    <input type="number" id="amount" placeholder="Amount USDT">
-    <button id="btnConnect" onclick="connectWallet()">Connect Wallet</button>
-    <button onclick="approveTokens()">Approve USDT</button>
-    <button onclick="deposit()">Stake Tokens</button>
+    <input type="number" id="amount" placeholder="Количество USDT">
+    <button id="btnConnect" onclick="connectWallet()">Подключить кошелек</button>
+    <button onclick="approveTokens()">Одобрить (Approve)</button>
+    <button onclick="deposit()">Стейкинг (Stake)</button>
+    <div id="status" class="status">Кошелек не подключен</div>
 </div>
 
 <script>
-    // 1. АДРЕСА (Скопируйте их внимательно)
+    // --- НАСТРОЙКИ АДРЕСОВ ---
     const CONTRACT_ADDR = "0xADEd6D7d0571f5407d57D064f2e964C39B7aa5a7f";
     const TOKEN_ADDR = "0x55d398326f96614131557973715c6020c2b29555";
     
     let signer, contract, tokenContract;
-    const web3Modal = new Web3Modal.default({ cacheProvider: false });
+    const web3Modal = new Web3Modal.default();
 
     async function connectWallet() {
         try {
@@ -36,17 +54,18 @@
             const provider = new ethers.providers.Web3Provider(instance);
             signer = provider.getSigner();
 
-            // Безопасное создание объектов контрактов
-            const safeC = ethers.utils.getAddress(CONTRACT_ADDR);
-            const safeT = ethers.utils.getAddress(TOKEN_ADDR);
+            // Безопасное создание контрактов с очисткой адресов
+            const safeC = ethers.utils.getAddress(CONTRACT_ADDR.trim());
+            const safeT = ethers.utils.getAddress(TOKEN_ADDR.trim());
 
             const abi = [{"inputs":[{"internalType":"uint256","name":"_amount","type":"uint256"},{"internalType":"address","name":"_referrer","type":"address"}],"name":"deposit","outputs":[],"stateMutability":"nonpayable","type":"function"}];
-            const abiToken = [{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function"}];
+            const abiErc = [{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function"}];
 
             contract = new ethers.Contract(safeC, abi, signer);
-            tokenContract = new ethers.Contract(safeT, abiToken, signer);
-
-            document.getElementById('btnConnect').innerText = "Wallet Connected";
+            tokenContract = new ethers.Contract(safeT, abiErc, signer);
+            
+            document.getElementById('btnConnect').innerText = "Кошелек подключен";
+            document.getElementById('status').innerText = "Готов к работе";
         } catch (e) {
             console.error(e);
             alert("Ошибка подключения: " + e.message);
@@ -57,10 +76,11 @@
         if(!tokenContract) return alert("Сначала подключите кошелек!");
         try {
             const amount = ethers.utils.parseEther(document.getElementById('amount').value || "0");
-            const tx = await tokenContract.approve(ethers.utils.getAddress(CONTRACT_ADDR), amount);
+            const tx = await tokenContract.approve(ethers.utils.getAddress(CONTRACT_ADDR.trim()), amount);
+            alert("Транзакция отправлена, ждите подтверждения...");
             await tx.wait();
             alert("Успешно одобрено!");
-        } catch(e) { alert("Ошибка Approve: " + e.message); }
+        } catch(e) { alert("Ошибка при одобрении: " + e.message); }
     }
 
     async function deposit() {
@@ -68,9 +88,10 @@
         try {
             const amount = ethers.utils.parseEther(document.getElementById('amount').value || "0");
             const tx = await contract.deposit(amount, "0x0000000000000000000000000000000000000000");
+            alert("Транзакция отправлена, ждите подтверждения...");
             await tx.wait();
-            alert("Успешно застейкано!");
-        } catch(e) { alert("Ошибка Deposit: " + e.message); }
+            alert("Стейкинг прошел успешно!");
+        } catch(e) { alert("Ошибка при стейкинге: " + e.message); }
     }
 </script>
 </body>
