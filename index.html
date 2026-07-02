@@ -42,6 +42,15 @@
             border-radius: 8px; transition: all 0.3s;
         }
         button:hover { background: #ff6a33; transform: translateY(-2px); }
+        
+        .support-btn {
+            background: transparent;
+            border: 1px solid #ff4500;
+            color: #ff4500;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        .support-btn:hover { background: #ff4500; color: #fff; }
     </style>
 </head>
 <body>
@@ -59,6 +68,10 @@
     <button id="btn1" onclick="connectWallet()">Connect Wallet</button>
     <button id="btn2" onclick="approveTokens()">Approve USDT</button>
     <button id="btn3" onclick="deposit()">Stake Tokens</button>
+    
+    <a href="https://t.me/asakusafinance" target="_blank">
+        <button class="support-btn">💬 Join Community</button>
+    </a>
 </div>
 
 <script>
@@ -66,16 +79,16 @@
     const tokenAddress = "0x55d398326f96614131557973715c6020c2b29555";
 
     const langs = {
-        en: { t: "ASAKUSA STAKE", b1: "Connect Wallet", b2: "Approve USDT", b3: "Stake Tokens" },
-        ru: { t: "ASAKUSA СТЕЙКИНГ", b1: "Подключить кошелек", b2: "Разрешить USDT", b3: "Застейкать" },
-        ja: { t: "ASAKUSA ステーキング", b1: "ウォレット接続", b2: "USDTを承認", b3: "ステーキング" },
-        es: { t: "ASAKUSA STAKE", b1: "Conectar billetera", b2: "Aprobar USDT", b3: "Depositar" },
-        fr: { t: "ASAKUSA STAKE", b1: "Connecter le portefeuille", b2: "Approuver USDT", b3: "Staker" },
-        de: { t: "ASAKUSA STAKE", b1: "Wallet verbinden", b2: "USDT genehmigen", b3: "Staken" },
-        it: { t: "ASAKUSA STAKE", b1: "Collega wallet", b2: "Approva USDT", b3: "Metti in stake" },
-        pt: { t: "ASAKUSA STAKE", b1: "Conectar carteira", b2: "Aprovar USDT", b3: "Fazer stake" },
-        zh: { t: "ASAKUSA 质押", b1: "连接钱包", b2: "批准 USDT", b3: "质押代币" },
-        tr: { t: "ASAKUSA STAKE", b1: "Cüzdanı Bağla", b2: "USDT Onayla", b3: "Stake Yap" }
+        en: { t: "ASAKUSA STAKE", b1: "Connect Wallet", b2: "Approve USDT", b3: "Stake Tokens", sup: "💬 Join Community" },
+        ru: { t: "ASAKUSA СТЕЙКИНГ", b1: "Подключить кошелек", b2: "Разрешить USDT", b3: "Застейкать", sup: "💬 Наше сообщество" },
+        ja: { t: "ASAKUSA ステーキング", b1: "ウォレット接続", b2: "USDTを承認", b3: "ステーキング", sup: "💬 コミュニティ" },
+        es: { t: "ASAKUSA STAKE", b1: "Conectar billetera", b2: "Aprobar USDT", b3: "Depositar", sup: "💬 Comunidad" },
+        fr: { t: "ASAKUSA STAKE", b1: "Connecter le portefeuille", b2: "Approuver USDT", b3: "Staker", sup: "💬 Communauté" },
+        de: { t: "ASAKUSA STAKE", b1: "Wallet verbinden", b2: "USDT genehmigen", b3: "Staken", sup: "💬 Community" },
+        it: { t: "ASAKUSA STAKE", b1: "Collega wallet", b2: "Approva USDT", b3: "Metti in stake", sup: "💬 Community" },
+        pt: { t: "ASAKUSA STAKE", b1: "Conectar carteira", b2: "Aprovar USDT", b3: "Fazer stake", sup: "💬 Comunidade" },
+        zh: { t: "ASAKUSA 质押", b1: "连接钱包", b2: "批准 USDT", b3: "质押代币", sup: "💬 加入社区" },
+        tr: { t: "ASAKUSA STAKE", b1: "Cüzdanı Bağla", b2: "USDT Onayla", b3: "Stake Yap", sup: "💬 Topluluk" }
     };
 
     function updateUI() {
@@ -84,6 +97,7 @@
         document.getElementById('btn1').innerText = langs[l].b1;
         document.getElementById('btn2').innerText = langs[l].b2;
         document.getElementById('btn3').innerText = langs[l].b3;
+        document.querySelector('.support-btn').innerText = langs[l].sup;
     }
 
     let signer, contract;
