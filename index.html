@@ -1,81 +1,73 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <title>Asakusa Staking</title>
-    <script src="https://unpkg.com/web3modal@1.9.12/dist/index.js"></script>
-    <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-    <script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
-    
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"></script>
     <style>
-        :root { --asa-red: #ff4500; --asa-black: #050505; --asa-white: #e0e0e0; }
-        body { margin: 0; height: 100vh; background: var(--asa-black); color: var(--asa-white); font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; overflow: hidden; background: linear-gradient(180deg, #1a0505 0%, #050505 100%); }
-        .fire-fx { position: absolute; width: 100%; height: 100%; background: radial-gradient(circle at 50% 50%, rgba(255, 69, 0, 0.2), transparent 60%); pointer-events: none; }
-        header { width: 100%; padding: 30px; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
-        .logo { font-size: 28px; font-weight: 900; color: var(--asa-red); text-transform: uppercase; border-left: 5px solid var(--asa-red); padding-left: 15px; }
-        .panel { background: rgba(10, 10, 10, 0.9); padding: 40px; border-radius: 2px; width: 320px; border-top: 5px solid var(--asa-red); border-bottom: 5px solid var(--asa-red); text-align: center; box-shadow: 0 0 30px rgba(255, 69, 0, 0.2); }
-        .btn-action { background: var(--asa-red); border: none; padding: 15px; width: 100%; color: #fff; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; transition: 0.3s; }
-        .btn-action:hover { background: #ff6a33; box-shadow: 0 0 20px var(--asa-red); }
-        select { background: #000; color: var(--asa-red); border: 1px solid var(--asa-red); padding: 5px; cursor: pointer; }
+        body { background: #050505; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .panel { background: #111; padding: 30px; border: 2px solid #ff4500; border-radius: 10px; width: 350px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 15px 0; background: #000; border: 1px solid #444; color: #fff; border-radius: 5px; box-sizing: border-box; }
+        button { background: #ff4500; color: #fff; border: none; padding: 12px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; border-radius: 5px; }
+        button:hover { background: #ff6a33; }
+        h2 { margin-top: 0; }
     </style>
 </head>
 <body>
-    <div class="fire-fx"></div>
-    <header>
-        <div class="logo">浅草 ASAKUSA</div>
-        <select id="langSelect" onchange="updateUI()">
-            <option value="en">English</option> <option value="ru">Русский</option>
-            <option value="ja">日本語</option> <option value="es">Español</option>
-            <option value="fr">Français</option> <option value="de">Deutsch</option>
-            <option value="it">Italiano</option> <option value="pt">Português</option>
-            <option value="zh">简体中文</option> <option value="tr">Türkçe</option>
-        </select>
-    </header>
 
-    <div class="panel">
-        <h2 id="titleText" style="margin-top:0;">Staking</h2>
-        <input type="number" id="amount" style="width:100%; padding:15px; background:#111; border:1px solid #333; color:#fff; box-sizing:border-box; margin-bottom: 20px;" placeholder="0.0">
-        <button class="btn-action" id="btnText" onclick="onConnect()">Connect Wallet</button>
-    </div>
+<div class="panel">
+    <h2>Asakusa Staking</h2>
+    <input type="number" id="amount" placeholder="Введите количество USDT">
+    <button onclick="connectWallet()">1. Подключить кошелек</button>
+    <button onclick="approveTokens()">2. Разрешить (Approve)</button>
+    <button onclick="deposit()">3. Застейкать</button>
+</div>
 
-    <script>
-        const Web3Modal = window.Web3Modal.default;
-        const web3Modal = new Web3Modal({
-            cacheProvider: false,
-            providerOptions: {
-                walletconnect: {
-                    package: window.WalletConnectProvider.default,
-                    options: { infuraId: "27e484dcd9e3efcfd25a83a78777cdf1" }
-                }
-            }
-        });
+<script>
+    // --- НАСТРОЙКИ (ВЖИВЛЕНЫ) ---
+    const contractAddress = "0xADEd6D7d0571f5407d57D064f2e964C39B7aa5a7f";
+    const tokenAddress = "0x55d398326f96614131557973715c6020c2b29555";
 
-        async function onConnect() {
-            try {
-                const provider = await web3Modal.connect();
-                const web3Provider = new ethers.providers.Web3Provider(provider);
-                const signer = web3Provider.getSigner();
-                const address = await signer.getAddress();
-                alert("Connected: " + address);
-            } catch(e) { console.log("Connection error", e); }
-        }
+    const abi = [
+        {"inputs":[{"internalType":"uint256","name":"_amount","type":"uint256"},{"internalType":"address","name":"_referrer","type":"address"}],"name":"deposit","outputs":[],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[{"internalType":"uint256","name":"_index","type":"uint256"}],"name":"withdraw","outputs":[],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[{"internalType":"address","name":"_user","type":"address"}],"name":"getDepositsCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+        {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"referrers","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+        {"inputs":[],"name":"stakingToken","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"}
+    ];
 
-        const langs = {
-            en: { t: "Staking", c: "Connect Wallet" }, ru: { t: "Стейкинг", c: "Войти в отряд" },
-            ja: { t: "ステーキング", c: "分隊に参加する" }, es: { t: "Staking", c: "Conectar" },
-            fr: { t: "Staking", c: "Connecter" }, de: { t: "Staking", c: "Verbinden" },
-            it: { t: "Staking", c: "Connetti" }, pt: { t: "Staking", c: "Conectar" },
-            zh: { t: "质押", c: "连接钱包" }, tr: { t: "Staking", c: "Bağlan" }
-        };
+    const erc20Abi = [
+        {"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function"}
+    ];
 
-        function updateUI() {
-            const l = document.getElementById('langSelect').value;
-            console.log("Language changed to:", l);
-            if(langs[l]) {
-                document.getElementById('titleText').innerText = langs[l].t;
-                document.getElementById('btnText').innerText = langs[l].c;
-            }
-        }
-    </script>
+    let provider, signer, contract;
+
+    async function connectWallet() {
+        if(!window.ethereum) return alert("Установите MetaMask!");
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = provider.getSigner();
+        contract = new ethers.Contract(contractAddress, abi, signer);
+        alert("Кошелек подключен!");
+    }
+
+    async function approveTokens() {
+        if(!signer) return alert("Сначала подключите кошелек!");
+        const amount = ethers.utils.parseEther(document.getElementById('amount').value);
+        const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, signer);
+        const tx = await tokenContract.approve(contractAddress, amount);
+        await tx.wait();
+        alert("Разрешение (Approve) успешно получено!");
+    }
+
+    async function deposit() {
+        if(!signer) return alert("Сначала подключите кошелек!");
+        const amount = ethers.utils.parseEther(document.getElementById('amount').value);
+        const ref = "0x0000000000000000000000000000000000000000"; // Можно добавить логику реферала позже
+        const tx = await contract.deposit(amount, ref);
+        await tx.wait();
+        alert("Стейкинг прошел успешно!");
+    }
+</script>
 </body>
 </html>
