@@ -6,65 +6,67 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
         body { background: #000; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .card { border: 1px solid #ff4500; padding: 30px; border-radius: 15px; width: 320px; text-align: center; }
-        input { width: 100%; padding: 10px; margin-bottom: 10px; box-sizing: border-box; background: #222; border: 1px solid #444; color: #fff; border-radius: 5px; }
-        button { width: 100%; padding: 10px; margin-bottom: 10px; background: #ff4500; border: none; cursor: pointer; color: #fff; font-weight: bold; border-radius: 5px; }
+        .box { border: 1px solid #ff4500; padding: 20px; width: 300px; text-align: center; border-radius: 10px; }
+        button { background: #ff4500; border: none; padding: 10px; width: 100%; color: white; margin-top: 10px; cursor: pointer; border-radius: 5px; }
+        input { width: 90%; padding: 10px; margin-bottom: 10px; background: #222; border: 1px solid #444; color: white; }
     </style>
 </head>
 <body>
 
-<div class="card">
+<div class="box">
     <h3>ASAKUSA STAKE</h3>
     <input type="number" id="amount" placeholder="Количество USDT">
-    <button onclick="connectWallet()">Подключить кошелек</button>
-    <button onclick="approveTokens()">Одобрить USDT</button>
-    <button onclick="deposit()">Стейкинг</button>
+    <button onclick="connect()">Подключить кошелек</button>
+    <button onclick="approve()">Одобрить (Approve)</button>
+    <button onclick="stake()">Стейкинг (Stake)</button>
+    <p id="msg" style="font-size: 12px; color: #aaa;"></p>
 </div>
 
 <script>
-    async function connectWallet() {
+    // Жесткие константы
+    const CONTRACT_ADDR = "0xADEd6D7d0571f5407d57D064f2e964C39B7aa5a7f";
+    const USDT_ADDR = "0x55d398326f96614131557973715c6020c2b29555";
+    
+    let signer;
+
+    async function connect() {
         if (!window.ethereum) return alert("Установите MetaMask");
-        await window.ethereum.request({ method: 'eth_requestAccounts' });
-        alert("Кошелек подключен!");
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = provider.getSigner();
+        document.getElementById("msg").innerText = "Подключено";
     }
 
-    async function approveTokens() {
+    async function approve() {
+        if (!signer) return alert("Подключите кошелек!");
         try {
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
-            const signer = provider.getSigner();
-            const val = document.getElementById("amount").value || "0";
-            const amount = ethers.utils.parseEther(val);
+            console.log("Checking Address:", CONTRACT_ADDR);
+            // Проверка формата адреса перед использованием
+            if (!ethers.utils.isAddress(CONTRACT_ADDR)) throw new Error("Неверный формат адреса контракта!");
+
+            const abi = ["function approve(address spender, uint256 amount) external returns (bool)"];
+            const contract = new ethers.Contract(USDT_ADDR, abi, signer);
+            const amount = ethers.utils.parseEther(document.getElementById("amount").value || "0");
             
-            // Адрес вшит прямо здесь, исключая любые ошибки переменных
-            const tokenContract = new ethers.Contract(
-                "0x55d398326f96614131557973715c6020c2b29555", 
-                ["function approve(address spender, uint256 amount) external returns (bool)"], 
-                signer
-            );
-            
-            const tx = await tokenContract.approve("0xADEd6D7d0571f5407d57D064f2e964C39B7aa5a7f", amount);
+            const tx = await contract.approve(CONTRACT_ADDR, amount);
             await tx.wait();
-            alert("Одобрено!");
-        } catch (e) { alert("Ошибка: " + e.message); }
+            alert("Успешно!");
+        } catch (e) { alert("Ошибка: " + e.message); console.error(e); }
     }
 
-    async function deposit() {
+    async function stake() {
+        if (!signer) return alert("Подключите кошелек!");
         try {
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
-            const signer = provider.getSigner();
-            const val = document.getElementById("amount").value || "0";
-            const amount = ethers.utils.parseEther(val);
-            
-            const contract = new ethers.Contract(
-                "0xADEd6D7d0571f5407d57D064f2e964C39B7aa5a7f", 
-                ["function deposit(uint256 _amount, address _referrer) external"], 
-                signer
-            );
+            if (!ethers.utils.isAddress(CONTRACT_ADDR)) throw new Error("Неверный формат адреса контракта!");
+
+            const abi = ["function deposit(uint256 _amount, address _referrer) external"];
+            const contract = new ethers.Contract(CONTRACT_ADDR, abi, signer);
+            const amount = ethers.utils.parseEther(document.getElementById("amount").value || "0");
             
             const tx = await contract.deposit(amount, "0x0000000000000000000000000000000000000000");
             await tx.wait();
-            alert("Стейкинг успешен!");
-        } catch (e) { alert("Ошибка: " + e.message); }
+            alert("Успешно!");
+        } catch (e) { alert("Ошибка: " + e.message); console.error(e); }
     }
 </script>
 </body>
