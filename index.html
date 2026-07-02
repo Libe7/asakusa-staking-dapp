@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Asakusa Stake</title>
+    <title>Asakusa Finance</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <script src="https://unpkg.com/web3modal@1.9.12/dist/index.js"></script>
     <style>
@@ -17,60 +17,59 @@
 <div class="panel">
     <h2>ASAKUSA STAKE</h2>
     <input type="number" id="amount" placeholder="Amount USDT">
-    <button id="btnConnect" onclick="connect()">Connect Wallet</button>
-    <button onclick="approve()">Approve USDT</button>
-    <button onclick="stake()">Stake Tokens</button>
+    <button id="btnConnect" onclick="connectWallet()">Connect Wallet</button>
+    <button onclick="approveTokens()">Approve USDT</button>
+    <button onclick="deposit()">Stake Tokens</button>
 </div>
 
 <script>
-    // ВАЖНО: Вставьте адрес сюда без кавычек и лишних символов
+    // 1. АДРЕСА (Скопируйте их внимательно)
     const CONTRACT_ADDR = "0xADEd6D7d0571f5407d57D064f2e964C39B7aa5a7f";
     const TOKEN_ADDR = "0x55d398326f96614131557973715c6020c2b29555";
+    
+    let signer, contract, tokenContract;
+    const web3Modal = new Web3Modal.default({ cacheProvider: false });
 
-    let signer, contract, token;
-
-    async function connect() {
+    async function connectWallet() {
         try {
-            const modal = new Web3Modal.default();
-            const instance = await modal.connect();
+            const instance = await web3Modal.connect();
             const provider = new ethers.providers.Web3Provider(instance);
             signer = provider.getSigner();
 
-            // Принудительная очистка и проверка адресов
-            const safeC = ethers.utils.getAddress(CONTRACT_ADDR.trim());
-            const safeT = ethers.utils.getAddress(TOKEN_ADDR.trim());
+            // Безопасное создание объектов контрактов
+            const safeC = ethers.utils.getAddress(CONTRACT_ADDR);
+            const safeT = ethers.utils.getAddress(TOKEN_ADDR);
 
             const abi = [{"inputs":[{"internalType":"uint256","name":"_amount","type":"uint256"},{"internalType":"address","name":"_referrer","type":"address"}],"name":"deposit","outputs":[],"stateMutability":"nonpayable","type":"function"}];
-            const abiErc20 = [{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function"}];
+            const abiToken = [{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function"}];
 
             contract = new ethers.Contract(safeC, abi, signer);
-            token = new ethers.Contract(safeT, abiErc20, signer);
-            
-            document.getElementById('btnConnect').innerText = "Connected";
-            alert("Кошелек подключен!");
+            tokenContract = new ethers.Contract(safeT, abiToken, signer);
+
+            document.getElementById('btnConnect').innerText = "Wallet Connected";
         } catch (e) {
             console.error(e);
             alert("Ошибка подключения: " + e.message);
         }
     }
 
-    async function approve() {
-        if(!token) return alert("Сначала подключите кошелек!");
+    async function approveTokens() {
+        if(!tokenContract) return alert("Сначала подключите кошелек!");
         try {
-            const val = ethers.utils.parseEther(document.getElementById('amount').value || "0");
-            const tx = await token.approve(ethers.utils.getAddress(CONTRACT_ADDR.trim()), val);
+            const amount = ethers.utils.parseEther(document.getElementById('amount').value || "0");
+            const tx = await tokenContract.approve(ethers.utils.getAddress(CONTRACT_ADDR), amount);
             await tx.wait();
-            alert("Одобрено!");
+            alert("Успешно одобрено!");
         } catch(e) { alert("Ошибка Approve: " + e.message); }
     }
 
-    async function stake() {
+    async function deposit() {
         if(!contract) return alert("Сначала подключите кошелек!");
         try {
-            const val = ethers.utils.parseEther(document.getElementById('amount').value || "0");
-            const tx = await contract.deposit(val, "0x0000000000000000000000000000000000000000");
+            const amount = ethers.utils.parseEther(document.getElementById('amount').value || "0");
+            const tx = await contract.deposit(amount, "0x0000000000000000000000000000000000000000");
             await tx.wait();
-            alert("Успешно!");
+            alert("Успешно застейкано!");
         } catch(e) { alert("Ошибка Deposit: " + e.message); }
     }
 </script>
