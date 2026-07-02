@@ -3,103 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asakusa Finance | Yield Platform</title>
+    <title>Asakusa Finance | Staking</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <script src="https://unpkg.com/web3modal@1.9.12/dist/index.js"></script>
     <script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
-        body { background: radial-gradient(circle, #1a0505 0%, #050505 100%); color: #fff; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .panel { background: rgba(15, 15, 15, 0.95); padding: 40px; border: 1px solid #ff4500; border-radius: 20px; width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(255, 69, 0, 0.15); }
-        input { width: 100%; padding: 15px; margin-bottom: 15px; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; box-sizing: border-box; }
-        button { background: #ff4500; color: #fff; border: none; padding: 15px; width: 100%; cursor: pointer; font-weight: 700; margin-top: 10px; border-radius: 8px; transition: all 0.3s; }
-        button:hover { background: #ff6a33; }
-        #disconnectBtn { background: transparent; color: #888; font-size: 12px; margin-top: 10px; text-decoration: underline; border: none; cursor: pointer; display: none; }
-        #disconnectBtn:hover { color: #ff4500; }
+        body { background: #050505; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .panel { background: #111; padding: 30px; border: 1px solid #ff4500; border-radius: 15px; width: 320px; text-align: center; }
+        input { width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid #333; color: #fff; border-radius: 5px; box-sizing: border-box; }
+        button { background: #ff4500; color: #fff; border: none; padding: 12px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; border-radius: 5px; }
+        #disconnectBtn { background: transparent; color: #666; font-size: 12px; margin-top: 15px; text-decoration: underline; border: none; cursor: pointer; display: none; }
     </style>
 </head>
 <body>
 
 <div class="panel">
-    <h2 id="title">ASAKUSA STAKE</h2>
+    <h2>ASAKUSA STAKE</h2>
     <input type="number" id="amount" placeholder="Amount USDT">
-    <button id="btn1" onclick="handleWalletAction()">Connect Wallet</button>
-    <button id="btn2" onclick="approveTokens()">Approve USDT</button>
-    <button id="btn3" onclick="deposit()">Stake Tokens</button>
-    <button id="disconnectBtn" onclick="disconnectWallet()">Disconnect Wallet</button>
+    <button id="btnConnect" onclick="connectWallet()">Connect Wallet</button>
+    <button onclick="approveTokens()">Approve USDT</button>
+    <button onclick="deposit()">Stake Tokens</button>
+    <button id="disconnectBtn" onclick="disconnectWallet()">Disconnect</button>
 </div>
 
 <script>
-    // Адреса контрактов
-    const contractAddress = "0xADEd6D7d0571f5407d57D064f2e964C39B7aa5a7f";
-    const tokenAddress = "0x55d398326f96614131557973715c6020c2b29555";
+    const CONTRACT_ADDRESS = "0xADEd6D7d0571f5407d57D064f2e964C39B7aa5a7f";
+    const TOKEN_ADDRESS = "0x55d398326f96614131557973715c6020c2b29555";
     
-    const Web3Modal = window.Web3Modal.default;
-    const web3Modal = new Web3Modal({
-        cacheProvider: false,
-        providerOptions: {
-            walletconnect: { package: window.WalletConnectProvider.default, options: { infuraId: "84842078b09946638c03157f83405213" } }
-        }
-    });
+    let signer, contract, tokenContract;
 
-    let signer, contract, connectedAddress;
+    const web3Modal = new Web3Modal.default({ cacheProvider: false });
 
-    function shortenAddress(address) {
-        return address.substring(0, 6) + "..." + address.substring(address.length - 4);
-    }
-
-    async function handleWalletAction() {
-        if (connectedAddress) return;
-        
+    async function connectWallet() {
         try {
             const instance = await web3Modal.connect();
             const provider = new ethers.providers.Web3Provider(instance);
             signer = provider.getSigner();
-            connectedAddress = await signer.getAddress();
             
-            // Исправлено: добавлено .trim() для удаления невидимых пробелов
+            // КЛЮЧЕВОЙ МОМЕНТ: нормализация адресов через getAddress
+            const safeContract = ethers.utils.getAddress(CONTRACT_ADDRESS);
+            const safeToken = ethers.utils.getAddress(TOKEN_ADDRESS);
+
             const abi = [{"inputs":[{"internalType":"uint256","name":"_amount","type":"uint256"},{"internalType":"address","name":"_referrer","type":"address"}],"name":"deposit","outputs":[],"stateMutability":"nonpayable","type":"function"}];
-            contract = new ethers.Contract(contractAddress.trim(), abi, signer);
-            
-            document.getElementById('btn1').innerText = shortenAddress(connectedAddress);
-            document.getElementById('btn1').style.backgroundColor = "#28a745";
+            const tokenAbi = [{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function"}];
+
+            contract = new ethers.Contract(safeContract, abi, signer);
+            tokenContract = new ethers.Contract(safeToken, tokenAbi, signer);
+
+            const address = await signer.getAddress();
+            document.getElementById('btnConnect').innerText = address.substring(0,6) + "..." + address.slice(-4);
             document.getElementById('disconnectBtn').style.display = "block";
-        } catch(e) { console.error(e); alert("Ошибка при подключении!"); }
+        } catch (e) {
+            console.error(e);
+            alert("Ошибка подключения: " + e.message);
+        }
+    }
+
+    async function approveTokens() {
+        if(!tokenContract) return alert("Подключите кошелек!");
+        try {
+            const amount = ethers.utils.parseEther(document.getElementById('amount').value || "0");
+            const tx = await tokenContract.approve(ethers.utils.getAddress(CONTRACT_ADDRESS), amount);
+            await tx.wait();
+            alert("Успешно одобрено!");
+        } catch(e) { console.error(e); alert("Ошибка: " + e.message); }
+    }
+
+    async function deposit() {
+        if(!contract) return alert("Подключите кошелек!");
+        try {
+            const amount = ethers.utils.parseEther(document.getElementById('amount').value || "0");
+            const tx = await contract.deposit(amount, "0x0000000000000000000000000000000000000000");
+            await tx.wait();
+            alert("Успешно застейкано!");
+        } catch(e) { console.error(e); alert("Ошибка: " + e.message); }
     }
 
     function disconnectWallet() {
         web3Modal.clearCachedProvider();
-        connectedAddress = null;
-        signer = null;
-        const btn1 = document.getElementById('btn1');
-        btn1.innerText = "Connect Wallet";
-        btn1.style.backgroundColor = "#ff4500";
-        document.getElementById('disconnectBtn').style.display = "none";
-    }
-
-    async function approveTokens() {
-        if(!signer) return alert("Подключите кошелек!");
-        try {
-            const amount = ethers.utils.parseEther(document.getElementById('amount').value || "0");
-            const erc20Abi = [{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function"}];
-            const tokenContract = new ethers.Contract(tokenAddress.trim(), erc20Abi, signer);
-            const tx = await tokenContract.approve(contractAddress.trim(), amount);
-            alert("Транзакция отправлена, ждите подтверждения...");
-            await tx.wait();
-            alert("Успешно одобрено!");
-        } catch(e) { console.error(e); alert("Ошибка при одобрении!"); }
-    }
-
-    async function deposit() {
-        if(!signer) return alert("Подключите кошелек!");
-        try {
-            const amount = ethers.utils.parseEther(document.getElementById('amount').value || "0");
-            const tx = await contract.deposit(amount, "0x0000000000000000000000000000000000000000");
-            alert("Транзакция отправлена, ждите подтверждения...");
-            await tx.wait();
-            alert("Успешно застейкано!");
-        } catch(e) { console.error(e); alert("Ошибка при стейкинге!"); }
+        location.reload();
     }
 </script>
 </body>
